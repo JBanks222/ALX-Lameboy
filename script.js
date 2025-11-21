@@ -176,6 +176,10 @@ if (canvas) {
     }, 100);
 }
 
+// Mobile detection and optimization
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
 // Game state
 let gameState = 'menu'; // 'menu', 'playing', 'gameover'
 let score = 0;
@@ -184,6 +188,9 @@ let ultimateBar = 0; // 0-100, fills 10% per kill
 let ultimateActive = false; // Whether ultimate laser is currently active
 let ultimateLaser = null; // Ultimate laser object
 
+// Audio context for mobile
+let audioContextUnlocked = false;
+
 // Load spaceship image
 let spaceshipImage = null;
 let enemyImage = null;
@@ -191,6 +198,42 @@ let splatSound = null;
 let ultimateSound = null;
 let radioSound = null;
 let assetsLoaded = false;
+
+// Unlock audio context for mobile (required for audio to work)
+function unlockAudioContext() {
+    if (audioContextUnlocked) return;
+    
+    // Create a silent audio buffer and play it on user interaction
+    const unlockAudio = () => {
+        if (audioContextUnlocked) return;
+        
+        try {
+            // Try to play a silent sound to unlock audio
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjGH0fPZgjMGHm7A7+OQQAoUXrTp66hVFApGn+DyvmwhBjGH0fPZgjMGHm7A7+OQQAoUXrTp66hVFApGn+DyvmwhBjGH0fPZgjMGHm7A7+OQQAoUXrTp66hVFApGn+DyvmwhBjGH0fPZgjMGHm7A7+OQQAoUXrTp66hVFApGn+DyvmwhBjGH0fPZgjMGHm7A7+OQ==');
+            audio.volume = 0.01;
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    audioContextUnlocked = true;
+                    console.log('Audio context unlocked for mobile');
+                    audio.pause();
+                    audio.remove();
+                }).catch(() => {
+                    // Ignore errors
+                });
+            }
+        } catch (e) {
+            // Fallback: just mark as unlocked after first interaction
+            audioContextUnlocked = true;
+        }
+    };
+    
+    // Unlock on any user interaction
+    document.addEventListener('touchstart', unlockAudio, { once: true });
+    document.addEventListener('touchend', unlockAudio, { once: true });
+    document.addEventListener('click', unlockAudio, { once: true });
+    document.addEventListener('keydown', unlockAudio, { once: true });
+}
 
 function loadAssets() {
     return new Promise((resolve) => {
@@ -379,17 +422,19 @@ function activateUltimate() {
     ultimateBar = 0;
     
     // Play ultimate sound effect
-    if (ultimateSound) {
+    if (ultimateSound && audioContextUnlocked) {
         try {
             // Clone and play to allow overlapping sounds
             const soundClone = ultimateSound.cloneNode();
             soundClone.volume = 0.7; // Set volume
-            soundClone.play().catch(e => {
-                // Ignore audio play errors (user interaction required on some browsers)
-                console.log('Audio play prevented:', e);
-            });
+            const playPromise = soundClone.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(e => {
+                    // Ignore audio play errors
+                });
+            }
         } catch (e) {
-            console.log('Error playing ultimate sound:', e);
+            // Ignore errors
         }
     }
     
@@ -462,8 +507,9 @@ function updateBullets() {
 }
 
 function updateEnemies() {
-    // Spawn new enemies
-    if (Math.random() < 0.02 + gameSpeed * 0.01) {
+    // Spawn new enemies (reduced rate on mobile for performance)
+    const spawnRate = isMobile ? (0.015 + gameSpeed * 0.007) : (0.02 + gameSpeed * 0.01);
+    if (Math.random() < spawnRate) {
         spawnEnemy();
     }
     
@@ -495,17 +541,19 @@ function checkCollisions() {
                 ultimateBar = Math.min(100, ultimateBar + 10);
                 
                 // Play splat sound effect
-                if (splatSound) {
+                if (splatSound && audioContextUnlocked) {
                     try {
                         // Clone and play to allow overlapping sounds
                         const soundClone = splatSound.cloneNode();
                         soundClone.volume = 0.5; // Set volume
-                        soundClone.play().catch(e => {
-                            // Ignore audio play errors (user interaction required on some browsers)
-                            console.log('Audio play prevented:', e);
-                        });
+                        const playPromise = soundClone.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(e => {
+                                // Ignore audio play errors
+                            });
+                        }
                     } catch (e) {
-                        console.log('Error playing splat sound:', e);
+                        // Ignore errors
                     }
                 }
                 break;
@@ -682,7 +730,19 @@ function render() {
     }
 }
 
-function gameLoop() {
+// Frame throttling for mobile performance
+let lastFrameTime = 0;
+const targetFPS = isMobile ? 30 : 60;
+const frameInterval = 1000 / targetFPS;
+
+function gameLoop(currentTime) {
+    // Throttle updates on mobile
+    if (isMobile && currentTime - lastFrameTime < frameInterval) {
+        requestAnimationFrame(gameLoop);
+        return;
+    }
+    lastFrameTime = currentTime || performance.now();
+    
     if (gameState === 'playing') {
         updatePlayer();
         updateBullets();
@@ -708,47 +768,72 @@ document.addEventListener('buttonPress', (e) => {
 });
 
 // Initialize
+unlockAudioContext(); // Start unlocking audio context for mobile
+
 loadAssets().then(() => {
     console.log('Assets loaded!');
+    if (isMobile) {
+        console.log('Mobile optimizations enabled');
+    }
 });
 
 if (canvas) {
     resizeCanvas();
-    gameLoop();
+    gameLoop(0);
 }
 
 // Radio functionality
+// Radio functionality
 function playRadio() {
-    if (radioSound) {
-        try {
-            // Stop current playback if playing
-            if (!radioSound.paused) {
-                radioSound.pause();
-                radioSound.currentTime = 0;
+    // Unlock audio context on first interaction
+    if (!audioContextUnlocked) {
+        unlockAudioContext();
+        // Wait a bit for audio to unlock
+        setTimeout(() => {
+            if (audioContextUnlocked && radioSound) {
+                playRadioSound();
             }
-            
-            // Play the radio sound
-            radioSound.volume = 0.7;
-            radioSound.play().then(() => {
+        }, 100);
+        return;
+    }
+    
+    if (radioSound) {
+        playRadioSound();
+    }
+}
+
+function playRadioSound() {
+    try {
+        // Stop current playback if playing
+        if (!radioSound.paused) {
+            radioSound.pause();
+            radioSound.currentTime = 0;
+        }
+        
+        // Play the radio sound
+        radioSound.volume = 0.7;
+        const playPromise = radioSound.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
                 // Update radio indicator
                 const indicator = document.getElementById('radioIndicator');
                 if (indicator) {
                     indicator.classList.add('active');
                 }
             }).catch(e => {
-                console.log('Audio play prevented:', e);
+                // Ignore errors
             });
-            
-            // Update indicator when sound ends
-            radioSound.onended = () => {
-                const indicator = document.getElementById('radioIndicator');
-                if (indicator) {
-                    indicator.classList.remove('active');
-                }
-            };
-        } catch (e) {
-            console.log('Error playing radio sound:', e);
         }
+        
+        // Update indicator when sound ends
+        radioSound.onended = () => {
+            const indicator = document.getElementById('radioIndicator');
+            if (indicator) {
+                indicator.classList.remove('active');
+            }
+        };
+    } catch (e) {
+        // Ignore errors
     }
 }
 
