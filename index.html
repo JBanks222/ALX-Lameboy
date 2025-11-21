@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lameboy - Retro Game Console</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Radio -->
+        <div class="radio" id="radio">
+            <div class="radio-top">
+                <div class="radio-branding">RADIO</div>
+                <div class="radio-indicator" id="radioIndicator"></div>
+            </div>
+            <div class="radio-body">
+                <div class="radio-speaker">
+                    <div class="radio-speaker-line"></div>
+                    <div class="radio-speaker-line"></div>
+                    <div class="radio-speaker-line"></div>
+                    <div class="radio-speaker-line"></div>
+                    <div class="radio-speaker-line"></div>
+                </div>
+                <div class="radio-controls">
+                    <div class="radio-button" id="radioButton">
+                        <div class="radio-button-inner"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="lameboy">
+            <!-- Top section with branding -->
+            <div class="top-section">
+                <div class="branding">LAMEBOY</div>
+                <div class="power-indicator"></div>
+            </div>
+
+            <!-- Screen section -->
+            <div class="screen-section">
+                <div class="screen-border">
+                    <div class="screen">
+                        <div class="screen-content">
+                            <div class="game-display">
+                                <canvas id="gameCanvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls section -->
+            <div class="controls-section">
+                <!-- Left side: D-pad -->
+                <div class="dpad-container">
+                    <div class="dpad">
+                        <button class="dpad-btn up" data-button="up">▲</button>
+                        <div class="dpad-middle">
+                            <button class="dpad-btn left" data-button="left">◄</button>
+                            <div class="dpad-center"></div>
+                            <button class="dpad-btn right" data-button="right">►</button>
+                        </div>
+                        <button class="dpad-btn down" data-button="down">▼</button>
+                    </div>
+                </div>
+
+                <!-- Right side: J, B buttons -->
+                <div class="action-buttons">
+                    <button class="action-btn b-btn" data-button="b">B</button>
+                    <button class="action-btn j-btn" data-button="j">J</button>
+                </div>
+            </div>
+
+            <!-- Bottom section: Start, Select, Speaker -->
+            <div class="bottom-section">
+                <div class="speaker-grille">
+                    <div class="speaker-line"></div>
+                    <div class="speaker-line"></div>
+                    <div class="speaker-line"></div>
+                    <div class="speaker-line"></div>
+                    <div class="speaker-line"></div>
+                </div>
+                <div class="start-select">
+                    <button class="small-btn select-btn" data-button="select">SELECT</button>
+                    <button class="small-btn start-btn" data-button="start">START</button>
+                </div>
+                <div class="speaker-grille">
+                    <div class="speaker-line"></div>
+                    <div class="speaker-line"></div>
+                    <div class="speaker-line"></div>
+                    <div class="speaker-line"></div>
+                    <div class="speaker-line"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
