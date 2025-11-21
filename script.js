@@ -765,6 +765,25 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+// Instructions panel toggle
+const instructionsPanel = document.getElementById('instructionsPanel');
+const instructionsHeader = document.getElementById('instructionsHeader');
+const instructionsToggle = document.getElementById('instructionsToggle');
+
+if (instructionsHeader && instructionsPanel) {
+    instructionsHeader.addEventListener('click', () => {
+        instructionsPanel.classList.toggle('collapsed');
+    });
+    
+    // Prevent toggle button from triggering header click twice
+    if (instructionsToggle) {
+        instructionsToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            instructionsPanel.classList.toggle('collapsed');
+        });
+    }
+}
+
 console.log('Lameboy initialized!');
 console.log('Controls:');
 console.log('  Arrow Keys or WASD: Move spaceship');
