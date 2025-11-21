@@ -785,24 +785,20 @@ if (canvas) {
 // Radio functionality
 // Radio functionality
 function playRadio() {
-    // Unlock audio context on first interaction
+    if (!radioSound) return;
+    
+    // Mark audio as unlocked when user interacts with radio
     if (!audioContextUnlocked) {
-        unlockAudioContext();
-        // Wait a bit for audio to unlock
-        setTimeout(() => {
-            if (audioContextUnlocked && radioSound) {
-                playRadioSound();
-            }
-        }, 100);
-        return;
+        audioContextUnlocked = true;
     }
     
-    if (radioSound) {
-        playRadioSound();
-    }
+    // Play the radio sound
+    playRadioSound();
 }
 
 function playRadioSound() {
+    if (!radioSound) return;
+    
     try {
         // Stop current playback if playing
         if (!radioSound.paused) {
@@ -810,30 +806,41 @@ function playRadioSound() {
             radioSound.currentTime = 0;
         }
         
+        // Update radio indicator immediately
+        const indicator = document.getElementById('radioIndicator');
+        if (indicator) {
+            indicator.classList.add('active');
+        }
+        
         // Play the radio sound
         radioSound.volume = 0.7;
         const playPromise = radioSound.play();
+        
         if (playPromise !== undefined) {
             playPromise.then(() => {
-                // Update radio indicator
-                const indicator = document.getElementById('radioIndicator');
-                if (indicator) {
-                    indicator.classList.add('active');
-                }
+                // Successfully playing
             }).catch(e => {
-                // Ignore errors
+                // If play fails, remove indicator
+                if (indicator) {
+                    indicator.classList.remove('active');
+                }
+                console.log('Radio play failed:', e);
             });
         }
         
         // Update indicator when sound ends
         radioSound.onended = () => {
-            const indicator = document.getElementById('radioIndicator');
             if (indicator) {
                 indicator.classList.remove('active');
             }
         };
     } catch (e) {
-        // Ignore errors
+        console.log('Error in playRadioSound:', e);
+        // Remove indicator on error
+        const indicator = document.getElementById('radioIndicator');
+        if (indicator) {
+            indicator.classList.remove('active');
+        }
     }
 }
 
